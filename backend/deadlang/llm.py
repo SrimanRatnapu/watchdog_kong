@@ -83,6 +83,7 @@ def set_client_for_tests(fake: Any) -> None:
 GATEWAY_ROLES = {"report_screening": "triage", "post_position": "agents", "report_material": "examiner",
                  "report_translation": "translation", "report_decision": "eval"}
 _gateway_clients: dict[str, Any] = {}
+CASE_HEADER = "X-Watchdog-Case"          # read and removed by the watchdog-audit plugin (infra/kong/plugins/)
 
 
 class GatewayBlocked(Exception):
@@ -385,8 +386,11 @@ CONNECTION_RETRY_SECONDS = 0.0
 CONNECTION_BACKOFF = (2.0, 30.0)
 
 
-async def _create(req: dict, schema_name: str) -> Any:
+async def _create(req: dict, schema_name: str, case_id: str | None = None) -> Any:
     client = _get_client(gateway_role(schema_name))
+    if config.GATEWAY_URL and case_id:
+        # Kong's watchdog-audit plugin files the call under this case, then removes the header before Anthropic.
+        req = {**req, "extra_headers": {CASE_HEADER: case_id}}
     try:
         return await client.messages.create(**req)
     except Exception as exc:
@@ -422,7 +426,7 @@ async def _attempt(req: dict, schema_name: str, case_id: str | None, est_in: int
     resp = None
     try:
         start = time.perf_counter()
-        resp = await _create(req, schema_name)
+        resp = await _create(req, schema_name, case_id)
         ms = (time.perf_counter() - start) * 1000
         tokens_in, tokens_out, cache_read, cache_write = _usage_of(resp)
         await _record(res, tokens_in, tokens_out, cache_read, cache_write)

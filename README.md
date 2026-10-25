@@ -24,6 +24,9 @@ fork, by Sriman Ratnapu, adds [Kong Gateway](https://konghq.com/products/kong-ga
   view of model use across all of Watchdog's processes.
 - **Prompt guard as a red flag.** Kong's `ai-prompt-guard` checks the seller's text at triage. A listing that tries to
   instruct the AI is blocked before any model sees it, and Watchdog flags it with score 1.0.
+- **A Kong plugin in Go: `watchdog-audit`.** Every model call is written to a tamper-evident hash chain with its role,
+  case, model and request/response hashes, so the AI calls behind a case can be checked later
+  (`scripts/verify_audit_chain.py`).
 - **Measured through the real gateway.** The guard blocked 13 of 26 red-team attacks (all direct, role-play and buried
   ones; no paraphrased or non-English ones), 0 of 12 benign look-alikes, and 1 of 510 stored listings (the team's own
   injection test).

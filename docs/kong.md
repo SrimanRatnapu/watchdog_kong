@@ -13,15 +13,18 @@ The project review found three problems a gateway solves in one place:
 | Spend is tracked per process. In the multi-process setup, agent and examiner calls happen in other processes, so the API process undercounts cost. | Every call passes one gateway. Prometheus metrics give tokens per role and model, from all processes. |
 | Every process needs the Anthropic API key. | Watchdog holds only per-role gateway keys. Kong adds the real key, which it reads from its own environment. |
 | Seller text that tries to instruct the AI (prompt injection) is only handled inside the prompts. | Kong's prompt guard checks triage calls first. A listing that trips it is flagged with score 1.0 and never cleared. |
+| A referral to an investigator has no record of how the AI reached it that can be checked later. | `watchdog-audit`, a Kong plugin written in Go, keeps a tamper-evident hash chain of every model call, by case. |
 
 ## How it works
 
 ```
-triage ─┐                      ┌─ key-auth: one consumer per role (triage, agents, examiner, translation, eval)
-agents ─┤                      ├─ ai-prompt-guard: triage consumer only
-examiner┼─► Kong :8010 /v1/messages ─┼─ rate-limiting per consumer ─────────────► api.anthropic.com
-translation                    ├─ ai-proxy (route_type preserve): swaps in the real key, logs token usage
-eval ───┘                      └─ prometheus (ai_metrics, per consumer) ─► :8011/metrics
+Watchdog (one gateway key per role)          Kong :8010  POST /v1/messages                     Anthropic
+  triage ──────┐                             1. key-auth         which role is calling
+  agents ──────┤                             2. watchdog-audit   hash the request (our Go plugin)
+  examiner ────┼──── X-Watchdog-Case ──────► 3. rate-limiting    per role                     ──► api.anthropic.com
+  translation ─┤                             4. ai-prompt-guard  triage calls only
+  eval ────────┘                             5. ai-proxy         preserve mode, adds the real key
+                                             log: watchdog-audit appends to the hash chain; prometheus counts tokens
 ```
 
 - **`ai-proxy` in `preserve` mode.** Watchdog sends native Anthropic requests with tools, images, adaptive thinking and
@@ -34,6 +37,43 @@ eval ───┘                      └─ prometheus (ai_metrics, per consum
   `X-Kong-Upstream-Latency` header and an untyped error body. It raises `GatewayBlocked`, and triage returns score 1.0
   with the reason "Blocked by the Kong prompt guard". The listing goes on to the agents, which keep their own defence:
   seller text is delimited as untrusted data (`untrusted.py`).
+
+## The watchdog-audit plugin (Go)
+
+`infra/kong/plugins/watchdog-audit` is a Kong plugin written with Kong's Go PDK. It runs as an external plugin server
+next to Kong; `infra/kong/Dockerfile` builds it, runs its tests and adds it to the `kong/kong-gateway:3.12` image.
+
+For every request it records the role (Kong consumer), the case (the `X-Watchdog-Case` header, which `llm.py` sends
+and the plugin removes before Anthropic), the model, the status, whether Kong answered itself (a guard block), and
+SHA-256 hashes of the request and response bodies. It never stores the bodies themselves. Each entry includes the hash
+of the entry before it, and its own hash covers all of its fields, so an edited, removed or reordered entry breaks the
+chain from that point on.
+
+- **Phases.** `access` hashes the request and reads the case; `response` hashes the model's answer; `log` appends the
+  entry. `log` runs for every request, so blocked calls are recorded too.
+- **Priority 1000.** After `key-auth` (1250), so the role is known, and before `ai-prompt-guard` and `ai-proxy`, so a
+  request the guard blocks is still hashed.
+- **Restarts.** On start the plugin re-reads and verifies the existing chain and continues from its last hash. It
+  refuses to extend a chain that does not verify.
+- **Checking it.** `scripts/verify_audit_chain.py` (Python, stdlib only) re-computes every hash and lists the calls for
+  a case. The hashing rules are pinned by the same test vector in Go (`chain_test.go`) and Python
+  (`backend/tests/test_audit_chain.py`).
+
+```
+$ python scripts/verify_audit_chain.py infra/kong/audit/chain.jsonl --case C-0102
+verified: 4 entries, chain head 5cfb0838e26aeaf5
+calls by role: agents 1, examiner 1, triage 2
+blocked by the gateway: 1
+
+case C-0102: 3 calls
+  #2     2026-10-25T07:18:50  triage      claude-haiku-4-5-20251001    200  req f1246a84f491  resp ac644d7539b0
+  #3     2026-10-25T07:18:50  agents      claude-sonnet-5-5            200  req cf2862113f54  resp 21dafa2ef83d
+  #4     2026-10-25T07:18:50  examiner    claude-sonnet-5-5            200  req 0429954c6b57  resp 42e191377c18
+```
+
+What it does not do: a hash chain shows that the log was not changed after the fact. It cannot stop someone with
+write access from replacing the whole file. Publishing the chain head (for example, with each case file) would cover
+that.
 
 ## Measured
 
@@ -64,17 +104,14 @@ How to read it:
 ## Run it
 
 ```bash
-python infra/kong/render.py                      # writes infra/kong/kong.yml; adds DL_GATEWAY_KEY_* to .env if missing
-docker compose -f infra/kong/compose.yaml up -d  # Kong on :8010 (proxy) and 127.0.0.1:8011 (admin, /metrics)
-# then in .env: DL_GATEWAY_URL=http://localhost:8010   (ANTHROPIC_API_KEY is now needed only by Kong)
+make kong-mock          # offline: renders kong.yml, builds Kong + the Go plugin, starts the Anthropic stand-in
+# in .env: DL_GATEWAY_URL=http://localhost:8010, then run Watchdog as usual
+make kong-eval          # the guard measurement above
+make kong-verify        # check the audit chain
 ```
 
-Offline, with no key and no spend:
-
-```bash
-KONG_UPSTREAM_URL=http://mock-anthropic:9999 python infra/kong/render.py
-docker compose -f infra/kong/compose.yaml --profile mock up -d
-```
+With the real API, put `ANTHROPIC_API_KEY` in the environment Kong starts from and run `make kong`. Watchdog itself
+then needs only the `DL_GATEWAY_KEY_*` values, which `render.py` writes to `.env`.
 
 Token use per role:
 

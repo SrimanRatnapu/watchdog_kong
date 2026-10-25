@@ -60,7 +60,10 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--check", action="store_true", help="validate only; write nothing")
     args = ap.parse_args(argv)
-    text = render(TEMPLATE.read_text(), values(create_keys=not args.check))
+    vals = values(create_keys=not args.check)
+    text = render(TEMPLATE.read_text(), vals)
+    if "anthropic.com" in vals["KONG_UPSTREAM_URL"] and not vals.get("ANTHROPIC_API_KEY"):
+        print("warning: ANTHROPIC_API_KEY is not set; Kong needs it in its environment to call Anthropic", file=sys.stderr)
     if not args.check:
         OUT.write_text(text)
         OUT.chmod(0o644)       # Kong runs as its own user inside the container

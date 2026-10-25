@@ -106,6 +106,31 @@ async def test_triage_flags_a_blocked_listing_instead_of_failing_open(gateway, m
     assert not res.reason.startswith(triage.COULD_NOT_RUN)
 
 
+class Records:
+    def __init__(self):
+        self.reqs, self.messages = [], self
+
+    async def create(self, **req):
+        self.reqs.append(req)
+        return "ok"
+
+
+async def test_gateway_calls_carry_the_case_for_the_audit_plugin(gateway):
+    fake = Records()
+    gateway.setattr(llm, "_client", fake)
+    await llm._create({"model": "m"}, "post_position", "C-0007")
+    await llm._create({"model": "m"}, "post_position", None)
+    assert fake.reqs[0]["extra_headers"] == {llm.CASE_HEADER: "C-0007"} and "extra_headers" not in fake.reqs[1]
+
+
+async def test_direct_calls_send_no_case_header(monkeypatch):
+    monkeypatch.setattr(config, "GATEWAY_URL", "")
+    fake = Records()
+    monkeypatch.setattr(llm, "_client", fake)
+    await llm._create({"model": "m"}, "post_position", "C-0007")
+    assert "extra_headers" not in fake.reqs[0]
+
+
 # ---------------- render.py ----------------
 
 def test_render_fills_every_placeholder_and_writes_missing_keys(tmp_path, monkeypatch):

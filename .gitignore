@@ -17,3 +17,5 @@ data/images/live/
 # Kong: rendered config holds the gateway keys
 infra/kong/kong.yml
 backend/.usage.kong_eval.json
+infra/kong/audit/
+infra/kong/plugins/watchdog-audit/watchdog-audit

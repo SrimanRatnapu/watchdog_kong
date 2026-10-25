@@ -9,6 +9,7 @@
 #   - ai-prompt-guard runs on triage calls only. A triage prompt holds just our facts plus the seller's text,
 #     so a match means the seller wrote instructions aimed at the AI. Watchdog treats that block as a red flag.
 #   - rate-limiting per consumer, and prometheus with AI metrics (tokens per consumer and model).
+#   - watchdog-audit (our Go plugin) writes every call, blocked ones included, to a tamper-evident hash chain.
 _format_version: "3.0"
 
 consumers:
@@ -64,5 +65,9 @@ plugins:
     - '(?i)\b(system prompt|developer (message|mode)|jailbreak|prompt injection)\b'
     - '(?i)<\s*/?\s*(system|instructions?|admin)\s*>'
     - '(?i)\bdo not (request|run|perform|order|ask for)\b[^.\n]{0,30}\b(checks?|exams?|examinations?|tests?|reviews?|analysis)\b'
+# Our Go plugin (plugins/watchdog-audit): a hash-chained log of every model call, with the case it was for.
+- name: watchdog-audit
+  service: anthropic
+  config: {path: /kong/audit/chain.jsonl}
 - name: prometheus
   config: {ai_metrics: true, per_consumer: true, status_code_metrics: true, latency_metrics: true}
