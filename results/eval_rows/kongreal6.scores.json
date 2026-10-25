@@ -1,0 +1,907 @@
+{
+  "run_id": "kongreal6",
+  "generated_at": "2026-10-25T08:11:32+00:00",
+  "threshold": 0.15,
+  "population": {
+    "n_rows": 6,
+    "n_scored": 6,
+    "n_errors": 0,
+    "error_ids": [],
+    "n_positives": 6,
+    "n_negatives": 0
+  },
+  "configs": {
+    "sonnet_all": {
+      "catch": {
+        "count": 6,
+        "n": 6,
+        "rate": 1.0,
+        "text": "6 of 6"
+      },
+      "false_accusation": {
+        "count": 0,
+        "n": 0,
+        "rate": null,
+        "text": "0 of 0"
+      },
+      "escalation": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "outcomes_on_positives": {
+        "FILE": 1,
+        "WATCHLIST": 5
+      },
+      "outcomes_on_negatives": {},
+      "total_cost_usd": 1.2308028000000002,
+      "per_case": {
+        "input_tokens": 50992.833333333336,
+        "output_tokens": 8996.166666666666,
+        "cache_read_tokens": 24197.333333333332,
+        "cache_write_tokens": 3567.6666666666665,
+        "calls": 12.333333333333334,
+        "cost_usd": 0.20513380000000003
+      }
+    },
+    "tiered": {
+      "catch": {
+        "count": 6,
+        "n": 6,
+        "rate": 1.0,
+        "text": "6 of 6"
+      },
+      "false_accusation": {
+        "count": 0,
+        "n": 0,
+        "rate": null,
+        "text": "0 of 0"
+      },
+      "escalation": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "outcomes_on_positives": {
+        "FILE": 1,
+        "WATCHLIST": 5
+      },
+      "outcomes_on_negatives": {},
+      "cleared_by_triage": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "total_cost_usd": 1.2401388,
+      "per_case": {
+        "input_tokens": 52117.166666666664,
+        "output_tokens": 9082.5,
+        "cache_read_tokens": 24197.333333333332,
+        "cache_write_tokens": 3567.6666666666665,
+        "calls": 13.333333333333334,
+        "cost_usd": 0.2066898
+      }
+    }
+  },
+  "triage_sweep": [
+    {
+      "threshold": 0.05,
+      "recall": {
+        "count": 6,
+        "n": 6,
+        "rate": 1.0,
+        "text": "6 of 6"
+      },
+      "cleared": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.1,
+      "recall": {
+        "count": 6,
+        "n": 6,
+        "rate": 1.0,
+        "text": "6 of 6"
+      },
+      "cleared": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.15,
+      "recall": {
+        "count": 6,
+        "n": 6,
+        "rate": 1.0,
+        "text": "6 of 6"
+      },
+      "cleared": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "is_current_threshold": true
+    },
+    {
+      "threshold": 0.2,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.25,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.3,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.35,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.4,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.45,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    },
+    {
+      "threshold": 0.5,
+      "recall": {
+        "count": 2,
+        "n": 6,
+        "rate": 0.3333,
+        "text": "2 of 6"
+      },
+      "cleared": {
+        "count": 4,
+        "n": 6,
+        "rate": 0.6667,
+        "text": "4 of 6"
+      },
+      "is_current_threshold": false
+    }
+  ],
+  "subgroups": {
+    "language": {
+      "en": {
+        "n": 5,
+        "n_pos": 5,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 5,
+            "rate": 0.0,
+            "text": "0 of 5",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 5,
+            "rate": 0.0,
+            "text": "0 of 5",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      },
+      "vi": {
+        "n": 1,
+        "n_pos": 1,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      }
+    },
+    "country": {
+      "HK": {
+        "n": 4,
+        "n_pos": 4,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 4,
+            "rate": 0.0,
+            "text": "0 of 4",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 4,
+            "rate": 0.0,
+            "text": "0 of 4",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      },
+      "US": {
+        "n": 1,
+        "n_pos": 1,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      },
+      "VN": {
+        "n": 1,
+        "n_pos": 1,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 1,
+            "rate": 0.0,
+            "text": "0 of 1",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      }
+    },
+    "material": {
+      "bone": {
+        "n": 6,
+        "n_pos": 6,
+        "n_neg": 0,
+        "sonnet_all": {
+          "miss": {
+            "count": 0,
+            "n": 6,
+            "rate": 0.0,
+            "text": "0 of 6",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        },
+        "tiered": {
+          "miss": {
+            "count": 0,
+            "n": 6,
+            "rate": 0.0,
+            "text": "0 of 6",
+            "too_small_to_headline": true
+          },
+          "false_accusation": {
+            "count": 0,
+            "n": 0,
+            "rate": null,
+            "text": "0 of 0",
+            "too_small_to_headline": true
+          }
+        }
+      }
+    }
+  },
+  "case_officer_sat_out": {
+    "overall": {
+      "count": 0,
+      "n": 6,
+      "rate": 0.0,
+      "text": "0 of 6"
+    },
+    "by_label": {
+      "positive": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      },
+      "negative": {
+        "count": 0,
+        "n": 0,
+        "rate": null,
+        "text": "0 of 0"
+      }
+    },
+    "by_category": {
+      "ivory": {
+        "count": 0,
+        "n": 6,
+        "rate": 0.0,
+        "text": "0 of 6"
+      }
+    }
+  },
+  "claim_quality": {
+    "undercover": {
+      "listings": 6,
+      "made": 48,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejected_after_repair": 0,
+      "repair_calls": 0
+    },
+    "counsel": {
+      "listings": 6,
+      "made": 48,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejected_after_repair": 0,
+      "repair_calls": 5
+    },
+    "case_officer": {
+      "listings": 6,
+      "made": 60,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejected_after_repair": 0,
+      "repair_calls": 5
+    }
+  },
+  "triage_full": {
+    "run_id": "tri509",
+    "generated_at": "2026-10-11T17:22:55+00:00",
+    "threshold": 0.15,
+    "population": {
+      "n_rows": 509,
+      "n_scored": 509,
+      "n_errors": 0,
+      "n_positives": 28,
+      "n_negatives": 481
+    },
+    "at_current_threshold": {
+      "recall": {
+        "count": 28,
+        "n": 28,
+        "rate": 1.0,
+        "text": "28 of 28"
+      },
+      "cleared": {
+        "count": 46,
+        "n": 509,
+        "rate": 0.0904,
+        "text": "46 of 509"
+      },
+      "cleared_by_category": {
+        "ivory": {
+          "count": 0,
+          "n": 28,
+          "rate": 0.0,
+          "text": "0 of 28"
+        },
+        "legal_bone": {
+          "count": 2,
+          "n": 119,
+          "rate": 0.0168,
+          "text": "2 of 119"
+        },
+        "legal_resin": {
+          "count": 14,
+          "n": 111,
+          "rate": 0.1261,
+          "text": "14 of 111"
+        },
+        "other_legal": {
+          "count": 21,
+          "n": 185,
+          "rate": 0.1135,
+          "text": "21 of 185"
+        },
+        "tagua": {
+          "count": 9,
+          "n": 66,
+          "rate": 0.1364,
+          "text": "9 of 66"
+        }
+      }
+    },
+    "sweep": [
+      {
+        "threshold": 0.05,
+        "recall": {
+          "count": 28,
+          "n": 28,
+          "rate": 1.0,
+          "text": "28 of 28"
+        },
+        "cleared": {
+          "count": 0,
+          "n": 509,
+          "rate": 0.0,
+          "text": "0 of 509"
+        },
+        "cleared_negatives": {
+          "count": 0,
+          "n": 481,
+          "rate": 0.0,
+          "text": "0 of 481"
+        },
+        "missed_positives": [],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.1,
+        "recall": {
+          "count": 28,
+          "n": 28,
+          "rate": 1.0,
+          "text": "28 of 28"
+        },
+        "cleared": {
+          "count": 24,
+          "n": 509,
+          "rate": 0.0472,
+          "text": "24 of 509"
+        },
+        "cleared_negatives": {
+          "count": 24,
+          "n": 481,
+          "rate": 0.0499,
+          "text": "24 of 481"
+        },
+        "missed_positives": [],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.15,
+        "recall": {
+          "count": 28,
+          "n": 28,
+          "rate": 1.0,
+          "text": "28 of 28"
+        },
+        "cleared": {
+          "count": 46,
+          "n": 509,
+          "rate": 0.0904,
+          "text": "46 of 509"
+        },
+        "cleared_negatives": {
+          "count": 46,
+          "n": 481,
+          "rate": 0.0956,
+          "text": "46 of 481"
+        },
+        "missed_positives": [],
+        "is_current_threshold": true
+      },
+      {
+        "threshold": 0.2,
+        "recall": {
+          "count": 22,
+          "n": 28,
+          "rate": 0.7857,
+          "text": "22 of 28"
+        },
+        "cleared": {
+          "count": 360,
+          "n": 509,
+          "rate": 0.7073,
+          "text": "360 of 509"
+        },
+        "cleared_negatives": {
+          "count": 354,
+          "n": 481,
+          "rate": 0.736,
+          "text": "354 of 481"
+        },
+        "missed_positives": [
+          "L0056",
+          "L0098",
+          "L0174",
+          "L0324",
+          "L0331",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.25,
+        "recall": {
+          "count": 22,
+          "n": 28,
+          "rate": 0.7857,
+          "text": "22 of 28"
+        },
+        "cleared": {
+          "count": 364,
+          "n": 509,
+          "rate": 0.7151,
+          "text": "364 of 509"
+        },
+        "cleared_negatives": {
+          "count": 358,
+          "n": 481,
+          "rate": 0.7443,
+          "text": "358 of 481"
+        },
+        "missed_positives": [
+          "L0056",
+          "L0098",
+          "L0174",
+          "L0324",
+          "L0331",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.3,
+        "recall": {
+          "count": 18,
+          "n": 28,
+          "rate": 0.6429,
+          "text": "18 of 28"
+        },
+        "cleared": {
+          "count": 406,
+          "n": 509,
+          "rate": 0.7976,
+          "text": "406 of 509"
+        },
+        "cleared_negatives": {
+          "count": 396,
+          "n": 481,
+          "rate": 0.8233,
+          "text": "396 of 481"
+        },
+        "missed_positives": [
+          "L0047",
+          "L0065",
+          "L0056",
+          "L0098",
+          "L0158",
+          "L0174",
+          "L0214",
+          "L0324",
+          "L0331",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.35,
+        "recall": {
+          "count": 18,
+          "n": 28,
+          "rate": 0.6429,
+          "text": "18 of 28"
+        },
+        "cleared": {
+          "count": 413,
+          "n": 509,
+          "rate": 0.8114,
+          "text": "413 of 509"
+        },
+        "cleared_negatives": {
+          "count": 403,
+          "n": 481,
+          "rate": 0.8378,
+          "text": "403 of 481"
+        },
+        "missed_positives": [
+          "L0047",
+          "L0065",
+          "L0056",
+          "L0098",
+          "L0158",
+          "L0174",
+          "L0214",
+          "L0324",
+          "L0331",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.4,
+        "recall": {
+          "count": 15,
+          "n": 28,
+          "rate": 0.5357,
+          "text": "15 of 28"
+        },
+        "cleared": {
+          "count": 420,
+          "n": 509,
+          "rate": 0.8251,
+          "text": "420 of 509"
+        },
+        "cleared_negatives": {
+          "count": 407,
+          "n": 481,
+          "rate": 0.8462,
+          "text": "407 of 481"
+        },
+        "missed_positives": [
+          "L0047",
+          "L0023",
+          "L0065",
+          "L0056",
+          "L0098",
+          "L0158",
+          "L0174",
+          "L0214",
+          "L0324",
+          "L0331",
+          "L0358",
+          "L0375",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.45,
+        "recall": {
+          "count": 15,
+          "n": 28,
+          "rate": 0.5357,
+          "text": "15 of 28"
+        },
+        "cleared": {
+          "count": 420,
+          "n": 509,
+          "rate": 0.8251,
+          "text": "420 of 509"
+        },
+        "cleared_negatives": {
+          "count": 407,
+          "n": 481,
+          "rate": 0.8462,
+          "text": "407 of 481"
+        },
+        "missed_positives": [
+          "L0047",
+          "L0023",
+          "L0065",
+          "L0056",
+          "L0098",
+          "L0158",
+          "L0174",
+          "L0214",
+          "L0324",
+          "L0331",
+          "L0358",
+          "L0375",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      },
+      {
+        "threshold": 0.5,
+        "recall": {
+          "count": 15,
+          "n": 28,
+          "rate": 0.5357,
+          "text": "15 of 28"
+        },
+        "cleared": {
+          "count": 420,
+          "n": 509,
+          "rate": 0.8251,
+          "text": "420 of 509"
+        },
+        "cleared_negatives": {
+          "count": 407,
+          "n": 481,
+          "rate": 0.8462,
+          "text": "407 of 481"
+        },
+        "missed_positives": [
+          "L0047",
+          "L0023",
+          "L0065",
+          "L0056",
+          "L0098",
+          "L0158",
+          "L0174",
+          "L0214",
+          "L0324",
+          "L0331",
+          "L0358",
+          "L0375",
+          "L0415"
+        ],
+        "is_current_threshold": false
+      }
+    ],
+    "total_cost_usd": 0.841665,
+    "cost_per_listing_usd": 0.001653565815324165
+  }
+}

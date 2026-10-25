@@ -83,7 +83,7 @@ async def main(step: bool) -> None:
     say("4. Kong counts tokens per role (Prometheus, the Grafana dashboard reads this)", step)
     for role, n in sorted(tokens_by_role(metrics()).items()):
         print(f"   {role:<12} {n:>10,} tokens")
-    print(f"   Grafana: http://localhost:3000")
+    print(f"   Grafana: http://localhost:3001")
 
     say("5. Our Go plugin, watchdog-audit, logged every call in a hash chain", step)
     print("   " + run_verify(CHAIN, "C-LIVE-2").replace("\n", "\n   "))
