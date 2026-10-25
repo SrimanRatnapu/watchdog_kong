@@ -1,0 +1,68 @@
+# Kong Gateway in front of every Anthropic call Watchdog makes (DB-less, declarative).
+# render.py fills the placeholders from the environment / repo-root .env and writes kong.yml (gitignored).
+#
+# What it does:
+#   - Each kind of call has its own consumer and key (triage, agents, examiner, translation, eval), so Kong
+#     can count tokens and requests per role. Watchdog's processes hold only these gateway keys.
+#   - ai-proxy (route_type preserve) passes Watchdog's native Anthropic requests through unchanged (tools,
+#     images, thinking, prompt caching) and swaps in the real Anthropic key, read by Kong from its own env.
+#   - ai-prompt-guard runs on triage calls only. A triage prompt holds just our facts plus the seller's text,
+#     so a match means the seller wrote instructions aimed at the AI. Watchdog treats that block as a red flag.
+#   - rate-limiting per consumer, and prometheus with AI metrics (tokens per consumer and model).
+_format_version: "3.0"
+
+consumers:
+- username: triage
+  keyauth_credentials: [{key: "${DL_GATEWAY_KEY_TRIAGE}"}]
+- username: agents
+  keyauth_credentials: [{key: "${DL_GATEWAY_KEY_AGENTS}"}]
+- username: examiner
+  keyauth_credentials: [{key: "${DL_GATEWAY_KEY_EXAMINER}"}]
+- username: translation
+  keyauth_credentials: [{key: "${DL_GATEWAY_KEY_TRANSLATION}"}]
+- username: eval
+  keyauth_credentials: [{key: "${DL_GATEWAY_KEY_EVAL}"}]
+
+services:
+- name: anthropic
+  url: ${KONG_UPSTREAM_URL}
+  read_timeout: 180000
+  routes:
+  - name: messages
+    paths: ["/v1/messages"]
+    strip_path: false
+    methods: [POST]
+  plugins:
+  - name: key-auth
+    config: {key_names: [x-api-key], hide_credentials: true}
+  - name: ai-proxy
+    config:
+      route_type: preserve
+      logging: {log_statistics: true, log_payloads: false}
+      model:
+        provider: anthropic
+        options: {anthropic_version: "2023-06-01", upstream_url: "${KONG_UPSTREAM_URL}"}
+      auth:
+        header_name: x-api-key
+        header_value: "{vault://env/anthropic-api-key}"    # Kong reads ANTHROPIC_API_KEY from its own environment
+        allow_override: false
+  - name: rate-limiting
+    config: {minute: ${KONG_RATE_PER_MINUTE}, limit_by: consumer, policy: local}
+
+plugins:
+# Fixed before the red-team set in data/redteam/ was written, and not tuned on it (see docs/kong.md).
+- name: ai-prompt-guard
+  service: anthropic
+  consumer: triage
+  config:
+    deny_patterns:
+    - '(?i)\b(ignore|disregard|forget|override|bypass)\b[^.\n]{0,40}\b(previous|prior|above|earlier|preceding|all|any|your|system|these|those)\b[^.\n]{0,20}\b(instructions?|rules?|prompts?|guidelines?|directions?|directives?)\b'
+    - '(?i)\b(notice|note|message|attention|instructions?)\s+(to|for)\s+(the\s+)?(automated|AI|A\.I\.|bots?|LLMs?|language models?|reviewers?|moderators?|agents?|assistants?|screeners?)\b'
+    - '(?i)\b(AI|LLM|language model|chatbot|bot|automated (system|reviews?|reviewers?)|assistant)s?\b[^.\n]{0,60}\b(must|should|shall|need to|are to|will)\b[^.\n]{0,40}\b(dismiss|approve|clear|pass|mark|classify|label|rate|score)\b'
+    - '(?i)\b(set|change|make|put)\s+(your|the)\s+(stance|score|decision|rating|verdict|outcome)\b'
+    - '(?i)\byou are (now )?(a|an|the)\b[^.\n]{0,30}\b(assistant|AI|model|reviewer|moderator|bot)\b'
+    - '(?i)\b(system prompt|developer (message|mode)|jailbreak|prompt injection)\b'
+    - '(?i)<\s*/?\s*(system|instructions?|admin)\s*>'
+    - '(?i)\bdo not (request|run|perform|order|ask for)\b[^.\n]{0,30}\b(checks?|exams?|examinations?|tests?|reviews?|analysis)\b'
+- name: prometheus
+  config: {ai_metrics: true, per_consumer: true, status_code_metrics: true, latency_metrics: true}

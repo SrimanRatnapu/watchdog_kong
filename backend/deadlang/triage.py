@@ -23,6 +23,8 @@ MAX_TEXT_CHARS = 4000
 MAX_REASON_CHARS = 300
 COULD_NOT_RUN = "Triage could not run"      # starts the reason of a failed triage, so callers can tell
 FAIL_OPEN_SCORE = 0.5          # reported when triage could not run; the listing is sent on regardless
+GUARD_REASON = ("Blocked by the Kong prompt guard: the listing text gives instructions to AI reviewers, "
+                "so it is never cleared at triage.")
 
 # The collector's eye, plus the rule about untrusted text. scripts/compute_triage.py uses this too.
 SYSTEM = ("You screen marketplace listings for possible disguised elephant ivory. Read each one as an experienced "
@@ -88,6 +90,11 @@ async def screen(listing: Listing, seller: Seller | None = None, *, price_ratio:
         reason = " ".join(str(out.get("reason") or "").split())[:MAX_REASON_CHARS] or "No reason given."
     except BudgetExceeded:
         raise
+    except llm.GatewayBlocked:
+        # The seller's text tried to instruct the AI and the Kong gateway stopped it before any model saw it.
+        # That attempt is itself a reason to look closely: never clear it.
+        log.warning("triage: Kong prompt guard blocked %s; flagging it for review", listing.id)
+        return TriageResult(score=1.0, suspicious=True, reason=GUARD_REASON)
     except Exception as exc:
         log.warning("triage could not run for %s (%r); sending it to the agents", listing.id, exc)
         return TriageResult(score=FAIL_OPEN_SCORE, suspicious=True,

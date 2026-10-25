@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, model_validator
 from sse_starlette.sse import EventSourceResponse
 
 from deadlang import config, llm
+from deadlang import triage as triage_step
 from deadlang.api.batches import Batches
 from deadlang.api.events import EventBus
 from deadlang.api.runs import Runs
@@ -230,7 +231,18 @@ def create_app(market: Any = None, transport: Any = None, discovery: Any = None,
     async def real_worker(item: dict[str, Any], set_status: Any) -> None:
         if state["runs"].spend_today() >= config.MAX_SPEND_USD:
             raise RuntimeError(f"daily spend cap reached (${config.MAX_SPEND_USD:g}); not starting a new case")
-        # No triage step until Person B's screen() lands: every item is deliberated.
+        if config.LIVE_TRIAGE:
+            # Cheap screen first (through Kong when DL_GATEWAY_URL is set, where the prompt guard checks the seller's
+            # text). Only a confident clear stops here; a guard block comes back suspicious and goes on to the agents.
+            set_status(status="triaging")
+            listing = await state["market"].get_listing_snapshot(item["listing_id"])
+            seller = await state["market"].get_seller(listing.seller_id)
+            t = await triage_step.screen(listing, seller)
+            set_status(triage={"score": t.score, "reason": t.reason})
+            if not t.suspicious:
+                set_status(status="screened_out")
+                return
+        # Without DL_LIVE_TRIAGE every item is deliberated (the original behaviour).
         set_status(status="deliberating", started_at=now_iso(), phase="reading",
                    case_id=(case_id := start_case(item["listing_id"])))
         watcher = asyncio.create_task(_watch_phase(case_id, set_status))

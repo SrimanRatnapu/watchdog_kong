@@ -70,3 +70,15 @@ SLIM_ENDPOINT: str = _str("SLIM_ENDPOINT", "http://localhost:46357")
 SLIM_SHARED_SECRET: str = _str("SLIM_SHARED_SECRET", "deadlang-shared-secret-change-me-32chars-min")
 DIRECTORY_ADDRESS: str = _str("DIRECTORY_ADDRESS", "127.0.0.1:8888")
 AGNTCY_BROADCAST: bool = _str("DL_AGNTCY_BROADCAST", "1").lower() not in ("0", "false", "no")   # 0: one call per agent
+
+# Kong gateway (infra/kong/). When DL_GATEWAY_URL is set, every model call goes to Kong instead of straight to Anthropic,
+# with the gateway key of its role (DL_GATEWAY_KEY_TRIAGE, _AGENTS, _EXAMINER, _TRANSLATION, _EVAL; DL_GATEWAY_KEY is
+# the fallback). Kong holds the real Anthropic key, so these processes do not need ANTHROPIC_API_KEY. Unset: direct.
+GATEWAY_URL: str = _str("DL_GATEWAY_URL", "")
+# Run triage in the live queue before the agents (screened_out items skip them). Off: every item goes to the agents.
+LIVE_TRIAGE: bool = _str("DL_LIVE_TRIAGE", "0").lower() in ("1", "true", "yes", "on")
+
+
+def gateway_key(role: str) -> str:
+    """The gateway key for a role, read at call time (render.py may have just written it to .env)."""
+    return _str(f"DL_GATEWAY_KEY_{role.upper()}", "") or _str("DL_GATEWAY_KEY", "")

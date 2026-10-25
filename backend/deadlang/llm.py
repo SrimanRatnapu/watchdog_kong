@@ -77,13 +77,55 @@ def set_client_for_tests(fake: Any) -> None:
     _client = fake
 
 
-def _get_client() -> Any:
+# ---------------- Kong gateway ----------------
+
+# Which gateway consumer a call belongs to, by its schema. Kong counts tokens and applies its plugins per consumer.
+GATEWAY_ROLES = {"report_screening": "triage", "post_position": "agents", "report_material": "examiner",
+                 "report_translation": "translation", "report_decision": "eval"}
+_gateway_clients: dict[str, Any] = {}
+
+
+class GatewayBlocked(Exception):
+    """Kong refused the request itself (its prompt guard), so it never reached the model. Not retried."""
+
+    def __init__(self, role: str):
+        self.role = role
+        super().__init__(f"Kong prompt guard blocked this {role} call: the listing text gives instructions to the AI")
+
+
+def gateway_role(schema_name: str) -> str:
+    return GATEWAY_ROLES.get(schema_name, "agents")
+
+
+def _gateway_blocked(exc: Exception) -> bool:
+    """A 400 that Kong produced itself: no upstream latency header (the request never left Kong) and Kong's own error
+    body, not Anthropic's typed one. Anthropic's 400s pass through Kong with X-Kong-Upstream-Latency set."""
+    if not (config.GATEWAY_URL and isinstance(exc, anthropic.BadRequestError)):
+        return False
+    headers = exc.response.headers
+    body = exc.body if isinstance(exc.body, dict) else {}
+    err = body.get("error") if isinstance(body.get("error"), dict) else {}
+    return "x-kong-upstream-latency" not in headers and "x-kong-request-id" in headers and "type" not in err
+
+
+def _get_client(role: str = "agents") -> Any:
     global _client
-    if _client is None:
-        # A key that is not scoped to one workspace needs the workspace named on every request.
-        ws = os.environ.get("ANTHROPIC_WORKSPACE_ID")
-        _client = anthropic.AsyncAnthropic(max_retries=0, timeout=120.0,   # retries are ours: at most 1
-                                           default_headers={"anthropic-workspace-id": ws} if ws else None)
+    if _client is not None:                     # set_client_for_tests, or the direct client below
+        return _client
+    # A key that is not scoped to one workspace needs the workspace named on every request.
+    ws = os.environ.get("ANTHROPIC_WORKSPACE_ID")
+    headers = {"anthropic-workspace-id": ws} if ws else None
+    if config.GATEWAY_URL:
+        if role not in _gateway_clients:
+            key = config.gateway_key(role)
+            if not key:
+                raise RuntimeError(f"DL_GATEWAY_URL is set but there is no gateway key for '{role}' "
+                                   f"(set DL_GATEWAY_KEY_{role.upper()} or DL_GATEWAY_KEY; infra/kong/render.py makes them)")
+            _gateway_clients[role] = anthropic.AsyncAnthropic(api_key=key, base_url=config.GATEWAY_URL, max_retries=0,
+                                                              timeout=120.0, default_headers=headers)
+        return _gateway_clients[role]
+    _client = anthropic.AsyncAnthropic(max_retries=0, timeout=120.0,   # retries are ours: at most 1
+                                       default_headers=headers)
     return _client
 
 
@@ -344,10 +386,12 @@ CONNECTION_BACKOFF = (2.0, 30.0)
 
 
 async def _create(req: dict, schema_name: str) -> Any:
-    client = _get_client()
+    client = _get_client(gateway_role(schema_name))
     try:
         return await client.messages.create(**req)
     except Exception as exc:
+        if _gateway_blocked(exc):
+            raise GatewayBlocked(gateway_role(schema_name)) from exc
         if not _retryable(exc):
             raise
         log.warning("llm retry after %s (%s, %s)", type(exc).__name__, req["model"], schema_name)

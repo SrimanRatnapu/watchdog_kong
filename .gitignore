@@ -13,3 +13,7 @@ fixtures/replays/runs/
 data/runs.db
 data/live/
 data/images/live/
+
+# Kong: rendered config holds the gateway keys
+infra/kong/kong.yml
+backend/.usage.kong_eval.json
