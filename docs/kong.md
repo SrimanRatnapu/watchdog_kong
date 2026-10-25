@@ -118,6 +118,26 @@ How to read it:
   It misses paraphrases and other languages. Kong's AI Semantic Prompt Guard (Enterprise) matches by meaning and is
   the natural next step for those. The agents' delimiting stays the main defence.
 
+## Real API run
+
+Everything above was measured against the offline stand-in. To check that Kong works with the real API, Watchdog's
+full pipeline ran on 6 real listings with Kong in front of `api.anthropic.com` (`make kong`, Anthropic key in Kong's
+environment only; Watchdog held only the gateway keys). Results are in `results/kong_real.json`.
+
+| Check | Result |
+| --- | --- |
+| Listings (triage, photo examiner, the three agents) | 6 of 6 finished, 0 errors, 6 of 6 true positives caught |
+| Calls through Kong | 83, all 200 except the one injection listing from `kong_demo.py`, which the guard blocked (400 from Kong) |
+| Tools, images, thinking, prompt caching in `preserve` mode | All passed through unchanged; cache reads seen on agent and examiner calls |
+| Audit chain | `verified: 83 entries`, calls by role agents 49, examiner 24, translation 1, triage 9; the tamper check still fails an edited entry |
+| Tokens per role | Kong's counts match Watchdog's own uncached input and output tokens exactly, per role |
+| Cost | $1.24 billed (estimate $0.50, worst case $1.13). A cost built from Kong's tokens comes to $1.16, about 7% low, because Kong leaves out the cache tokens (see Limits) |
+| Kong's own overhead | p50 at most 5 ms, p95 at most 50 ms. Model time averaged 8.4 s per agent call, 5.1 s per examiner call, 1.1 s per triage call |
+
+The estimate was low because these 6 listings needed twice the examiner calls it assumed (24, not 12) and the agents
+wrote longer answers than in earlier runs. Six true positives cannot measure accuracy; the point is that the real API works end
+to end through the gateway.
+
 ## Decisions and trade-offs
 
 | Decision | Why | Cost of it |
