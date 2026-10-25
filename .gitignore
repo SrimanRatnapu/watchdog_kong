@@ -19,3 +19,4 @@ infra/kong/kong.yml
 backend/.usage.kong_eval.json
 infra/kong/audit/
 infra/kong/plugins/watchdog-audit/watchdog-audit
+backend/.usage.kong_demo.json

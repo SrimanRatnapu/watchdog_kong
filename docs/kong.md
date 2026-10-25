@@ -75,6 +75,23 @@ What it does not do: a hash chain shows that the log was not changed after the f
 write access from replacing the whole file. Publishing the chain head (for example, with each case file) would cover
 that.
 
+## Dashboard (Grafana)
+
+![Watchdog Kong dashboard](img/kong-dashboard.png)
+
+`make kong-dash` adds Prometheus and Grafana to the offline stack. Grafana opens on the dashboard at
+http://localhost:3000, with no login needed to view it. `make kong-traffic` sends five minutes of synthetic
+Watchdog-shaped calls through Kong. The screenshot above is that traffic against the offline stand-in, not real spend.
+
+| Panel | Built from |
+| --- | --- |
+| Model calls, tokens, guard blocks | `kong_http_requests_total`, `kong_ai_llm_tokens_total` (prometheus plugin, `ai_metrics` on) |
+| Estimated cost, total and by role | tokens × a per-model price series (`observability/prices.rules.yml`, the same prices as `costs.py`, checked by a test), joined `on(ai_model, token_type)` |
+| Tokens and requests per minute by role | the `consumer` label: one Kong consumer per Watchdog role |
+| Prompt guard: triage calls vs blocks | 400s that Kong produced itself (`source="kong"`) for the triage consumer |
+| Model latency p95 by model, Kong's own overhead | `kong_ai_llm_provider_latency_ms`, `kong_kong_latency_ms` |
+| Rate-limited requests | 429s from the per-role `rate-limiting` plugin |
+
 ## Measured
 
 `scripts/kong_guard_eval.py` sends every listing through Watchdog's real triage call and the real gateway. Kong points
@@ -101,11 +118,25 @@ How to read it:
   It misses paraphrases and other languages. Kong's AI Semantic Prompt Guard (Enterprise) matches by meaning and is
   the natural next step for those. The agents' delimiting stays the main defence.
 
+## Decisions and trade-offs
+
+| Decision | Why | Cost of it |
+| --- | --- | --- |
+| `ai-proxy` in `preserve` mode, not `llm/v1/chat` | Kong 3.12's `llm_format` has no Anthropic option, and converting to OpenAI's format would lose tools, image blocks, thinking and prompt caching | Kong can't rewrite or route between models. It proxies, authenticates and meters. |
+| Prompt guard on the triage consumer only | Agent prompts carry the debate (`stance=dismiss`, quotes of the seller), which would trip the guard on our own words | Agents rely on Watchdog's delimiting. A listing only meets the guard if triage runs (`DL_LIVE_TRIAGE=1` in the live queue). |
+| A guard block is a red flag (score 1.0), not an error | An injection attempt is itself evidence. Failing open or dropping the listing would reward it. | One more listing for the agents to review |
+| Per-role keys rendered into `kong.yml` | `key-auth` treats a `{vault://...}` reference as the literal key: credentials are not a referenceable field. Only the upstream Anthropic key uses the env vault. | `kong.yml` holds the gateway keys, so it is gitignored |
+| Audit plugin in Go (external plugin server) | Unit-testable chain logic without Kong, and a typed language for the hashing | Every request makes RPC calls to the plugin server. Kong's own overhead measured about 8 ms p50 and 48 ms p95 in the demo traffic. A Lua or Wasm version would avoid the RPC. |
+| Hash chain in a file, one writer | Simple, verifiable by anyone with Python, survives restarts (it re-verifies and resumes) | One Kong node only. Several nodes would each need their own chain, or a shared store. |
+| Patterns fixed before the red-team set | Avoids tuning the guard to the test | The headline is 13 of 26, not a tuned number |
+
 ## Run it
 
 ```bash
-make kong-mock          # offline: renders kong.yml, builds Kong + the Go plugin, starts the Anthropic stand-in
+make kong-dash          # offline: renders kong.yml, builds Kong + the Go plugin, starts the stand-in, Prometheus, Grafana
 # in .env: DL_GATEWAY_URL=http://localhost:8010, then run Watchdog as usual
+make kong-demo          # two-minute guided walkthrough (guard block, tokens by role, audit chain, tamper check)
+make kong-traffic       # five minutes of synthetic traffic for the dashboard
 make kong-eval          # the guard measurement above
 make kong-verify        # check the audit chain
 ```

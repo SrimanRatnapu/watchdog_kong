@@ -1,0 +1,713 @@
+{
+ "uid": "watchdog-kong",
+ "title": "Watchdog · Kong AI Gateway",
+ "tags": [
+  "watchdog",
+  "kong"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 41,
+ "version": 1,
+ "editable": true,
+ "refresh": "10s",
+ "time": {
+  "from": "now-15m",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Model calls through Kong",
+   "description": "All requests to /v1/messages in the time range, blocked ones included.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "round(sum(increase(kong_http_requests_total{service=\"anthropic\"}[$__range])))",
+     "legendFormat": "__auto",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "decimals": 0,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "text"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center"
+   }
+  },
+  {
+   "id": 2,
+   "type": "stat",
+   "title": "Tokens",
+   "description": "Prompt + completion tokens Kong read from Anthropic's usage block (cache reads and writes not included).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 6,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum(increase(kong_ai_llm_tokens_total{token_type=\"total_tokens\"}[$__range]))",
+     "legendFormat": "__auto",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 1,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "blue"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center"
+   }
+  },
+  {
+   "id": 3,
+   "type": "stat",
+   "title": "Estimated cost",
+   "description": "Tokens x list price per model (prices.rules.yml, same as backend/deadlang/costs.py). Uncached spend only.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum(sum by (consumer) (increase(kong_ai_llm_tokens_total{token_type=~\"prompt_tokens|completion_tokens\"}[$__range]) * on(ai_model, token_type) group_left() watchdog:price_usd_per_mtok) / 1e6)",
+     "legendFormat": "__auto",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyUSD",
+     "decimals": 2,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "green"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center"
+   }
+  },
+  {
+   "id": 4,
+   "type": "stat",
+   "title": "Blocked by the prompt guard",
+   "description": "Triage calls Kong's ai-prompt-guard refused: the seller's text gave instructions to the AI. Watchdog flags these listings (score 1.0).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 18,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "round(sum(increase(kong_http_requests_total{consumer=\"triage\",code=\"400\",source=\"kong\"}[$__range])))",
+     "legendFormat": "__auto",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "decimals": 0,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "red"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center"
+   }
+  },
+  {
+   "id": 5,
+   "type": "timeseries",
+   "title": "Tokens per minute, by role",
+   "description": "One Kong consumer per Watchdog role: triage, agents, examiner, translation, eval.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum by (consumer) (rate(kong_ai_llm_tokens_total{token_type=\"total_tokens\"}[1m])) * 60",
+     "legendFormat": "{{consumer}}",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "id": 6,
+   "type": "bargauge",
+   "title": "Estimated cost by role",
+   "description": "Where the money goes. Agents and the photo examiner run on the strong model.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum by (consumer) (increase(kong_ai_llm_tokens_total{token_type=~\"prompt_tokens|completion_tokens\"}[$__range]) * on(ai_model, token_type) group_left() watchdog:price_usd_per_mtok) / 1e6",
+     "legendFormat": "{{consumer}}",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyUSD",
+     "decimals": 3,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "green"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "horizontal",
+    "displayMode": "basic",
+    "showUnfilled": true,
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "valueMode": "color",
+    "namePlacement": "top",
+    "sizing": "auto",
+    "text": {
+     "titleSize": 15,
+     "valueSize": 18
+    }
+   }
+  },
+  {
+   "id": 7,
+   "type": "timeseries",
+   "title": "Requests per minute, by role and status",
+   "description": "200 = answered by the model; 400 from Kong = prompt guard; 429 = Kong's per-role rate limit.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum by (consumer, code) (rate(kong_http_requests_total{service=\"anthropic\"}[1m])) * 60",
+     "legendFormat": "{{consumer}} {{code}}",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "id": 8,
+   "type": "timeseries",
+   "title": "Prompt guard: triage calls vs blocks",
+   "description": "Each block is a listing whose text tried to instruct the AI reviewers.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum(rate(kong_http_requests_total{consumer=\"triage\"}[1m])) * 60",
+     "legendFormat": "triage calls / min",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum(rate(kong_http_requests_total{consumer=\"triage\",code=\"400\",source=\"kong\"}[1m])) * 60",
+     "legendFormat": "blocked / min",
+     "refId": "B",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "Model latency p95, by model",
+   "description": "Time Anthropic (or the offline stand-in) took to answer, measured by Kong.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 20,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le, ai_model) (rate(kong_ai_llm_provider_latency_ms_bucket{ai_provider=\"anthropic\"}[2m])))",
+     "legendFormat": "{{ai_model}}",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "id": 10,
+   "type": "timeseries",
+   "title": "Kong's own overhead p95",
+   "description": "Time spent inside Kong (all plugins, including the Go audit plugin), excluding the model.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 20,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(kong_kong_latency_ms_bucket{service=\"anthropic\"}[2m])))",
+     "legendFormat": "Kong p95",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "histogram_quantile(0.50, sum by (le) (rate(kong_kong_latency_ms_bucket{service=\"anthropic\"}[2m])))",
+     "legendFormat": "Kong p50",
+     "refId": "B",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "id": 11,
+   "type": "bargauge",
+   "title": "Tokens by model",
+   "description": "Haiku runs triage and translation; Sonnet runs the three agents and the photo examiner.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 28,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum by (ai_model) (increase(kong_ai_llm_tokens_total{token_type=\"total_tokens\"}[$__range]))",
+     "legendFormat": "{{ai_model}}",
+     "refId": "A",
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "decimals": 0,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "blue"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "horizontal",
+    "displayMode": "basic",
+    "showUnfilled": true,
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "namePlacement": "top",
+    "valueMode": "color",
+    "text": {
+     "titleSize": 15,
+     "valueSize": 18
+    },
+    "sizing": "auto"
+   }
+  },
+  {
+   "id": 12,
+   "type": "timeseries",
+   "title": "Rate-limited requests (429)",
+   "description": "Kong's per-role rate limit; llm.py retries a 429 once.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 28,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum by (consumer) (rate(kong_http_requests_total{code=\"429\"}[1m])) * 60",
+     "legendFormat": "{{consumer}}",
+     "refId": "A",
+     "instant": false,
+     "range": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     },
+     "expr": "sum(rate(kong_http_requests_total{code=\"429\"}[1m])) * 60 or vector(0)",
+     "legendFormat": "all roles",
+     "refId": "B",
+     "instant": false,
+     "range": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "drawStyle": "line",
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  }
+ ],
+ "description": "Every model call Watchdog makes, as Kong Gateway sees it: tokens, estimated cost, prompt-guard blocks and latency by role."
+}

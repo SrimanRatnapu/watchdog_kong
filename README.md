@@ -27,12 +27,15 @@ fork, by Sriman Ratnapu, adds [Kong Gateway](https://konghq.com/products/kong-ga
 - **A Kong plugin in Go: `watchdog-audit`.** Every model call is written to a tamper-evident hash chain with its role,
   case, model and request/response hashes, so the AI calls behind a case can be checked later
   (`scripts/verify_audit_chain.py`).
+- **Grafana dashboard.** Tokens, estimated cost, guard blocks and latency per role, from Kong's Prometheus metrics.
 - **Measured through the real gateway.** The guard blocked 13 of 26 red-team attacks (all direct, role-play and buried
   ones; no paraphrased or non-English ones), 0 of 12 benign look-alikes, and 1 of 510 stored listings (the team's own
   injection test).
 
-Details, design choices and limits: [docs/kong.md](docs/kong.md). Quick start: `make kong-mock` (offline, no key), then
-`DL_GATEWAY_URL=http://localhost:8010` in `.env`.
+Details, design choices and limits: [docs/kong.md](docs/kong.md). Quick start, offline with no API key: `make kong-dash`, then `DL_GATEWAY_URL=http://localhost:8010` in `.env`, then
+`make kong-demo` for a guided walkthrough and http://localhost:3000 for the dashboard.
+
+![Watchdog Kong dashboard](docs/img/kong-dashboard.png)
 
 ## Run it
 

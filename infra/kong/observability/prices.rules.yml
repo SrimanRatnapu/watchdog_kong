@@ -1,0 +1,23 @@
+# Per-model list prices (USD per million tokens) as series, so dashboards can turn Kong's token counts into an
+# estimated cost: tokens * on(ai_model, token_type) group_left watchdog:price_usd_per_mtok / 1e6.
+# Same numbers as backend/deadlang/costs.py (backend/tests/test_observability.py checks). Cache reads/writes are
+# not in Kong's counts, so this is an estimate of uncached spend.
+groups:
+- name: watchdog-prices
+  rules:
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(2.0), "ai_model", "claude-sonnet-5-5", "", ""), "token_type", "prompt_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(10.0), "ai_model", "claude-sonnet-5-5", "", ""), "token_type", "completion_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(4.0), "ai_model", "claude-opus-5-5", "", ""), "token_type", "prompt_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(20.0), "ai_model", "claude-opus-5-5", "", ""), "token_type", "completion_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(1.0), "ai_model", "claude-haiku-4-5-20251001", "", ""), "token_type", "prompt_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(5.0), "ai_model", "claude-haiku-4-5-20251001", "", ""), "token_type", "completion_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(0.1), "ai_model", "claude-haiku-5-5", "", ""), "token_type", "prompt_tokens", "", "")
+  - record: watchdog:price_usd_per_mtok
+    expr: label_replace(label_replace(vector(0.5), "ai_model", "claude-haiku-5-5", "", ""), "token_type", "completion_tokens", "", "")
